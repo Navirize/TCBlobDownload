@@ -409,5 +409,26 @@ NSString * const TCBlobDownloadErrorHTTPStatusKey = @"TCBlobDownloadErrorHTTPSta
 {
     return (_expectedDataLength == 0) ? 0 : (float) self.receivedDataLength / (float) self.expectedDataLength;
 }
+- (BOOL)connection:(NSURLConnection *)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
+    return [protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust];
+}
 
+- (void)connection:(NSURLConnection *)connection didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
+    
+    [challenge.sender continueWithoutCredentialForAuthenticationChallenge:challenge];
+}
+- (void)connection:(NSURLConnection *)connection willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
+{
+    if([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust])
+    {
+        NSLog(@"Ignoring SSL");
+        SecTrustRef trust = challenge.protectionSpace.serverTrust;
+        NSURLCredential *cred;
+        cred = [NSURLCredential credentialForTrust:trust];
+        [challenge.sender useCredential:cred forAuthenticationChallenge:challenge];
+        return;
+    }
+    
+    // Provide your regular login credential if needed...
+}
 @end
